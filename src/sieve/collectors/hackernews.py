@@ -1,47 +1,48 @@
+"""HackerNews collector for fetching top stories."""
+
 import aiohttp
-from datetime import datetime
+import asyncio
+from dataclasses import dataclass
 from typing import AsyncIterator
-import structlog
-from pydantic import BaseModel
+import logging
 
-from sieve.core.types import Discussion, Platform, DiscussionType
+logger = logging.getLogger(__name__)
 
-logger = structlog.get_logger()
+@dataclass
+class Discussion:
+    """Represents a HackerNews discussion."""
+    title: str
+    url: str
+    engagement_score: int
 
 class HNCollector:
-    """Simple HackerNews collector that fetches top stories"""
+    """Collects discussions from HackerNews."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.base_url = "https://hacker-news.firebaseio.com/v0"
         
-    async def collect_discussions(self) -> AsyncIterator[Discussion]:
-        """Collect top HN stories and convert them to discussions"""
-        async with aiohttp.ClientSession() as session:
-            try:
-                # Get top story IDs
-                async with session.get(f"{self.base_url}/topstories.json") as resp:
-                    story_ids = await resp.json()
-                
-                # Process first 10 stories
-                for story_id in story_ids[:10]:
-                    async with session.get(f"{self.base_url}/item/{story_id}.json") as resp:
-                        story = await resp.json()
-                        if story and story.get('type') == 'story':
-                            # Basic engagement score based on points and comments
-                            engagement = (story.get('score', 0) + story.get('descendants', 0)) / 200
-                            
-                            yield Discussion(
-                                id=f"hn_{story_id}",
-                                platform=Platform.HACKERNEWS,
-                                type=DiscussionType.TECHNICAL,  # We'll improve this later
-                                title=story.get('title', ''),
-                                content=story.get('text', ''),
-                                url=story.get('url', f"https://news.ycombinator.com/item?id={story_id}"),
-                                timestamp=datetime.fromtimestamp(story.get('time', 0)),
-                                engagement_score=min(engagement, 1.0),
-                                importance_score=0.0,  # Will be set during analysis
-                                participants=[story.get('by', 'unknown')]
-                            )
+    async def fetch_item(self, session: aiohttp.ClientSession, item_id: int) -> dict:
+        """Fetch a single HN item."""
+        async with session.get(f"{self.base_url}/item/{item_id}.json") as response:
+            return await response.json()
             
-            except Exception as e:
-                logger.error("hn_collection_error", error=str(e)) 
+    async def collect_discussions(self) -> AsyncIterator[Discussion]:
+        """Collect top stories from HackerNews."""
+        async with aiohttp.ClientSession() as session:
+            # Get top story IDs
+            async with session.get(f"{self.base_url}/topstories.json") as response:
+                story_ids = await response.json()
+                
+            # Process each story
+            for story_id in story_ids:
+                try:
+                    story = await self.fetch_item(session, story_id)
+                    if story and 'title' in story and 'url' in story:
+                        yield Discussion(
+                            title=story['title'],
+                            url=story.get('url', f"https://news.ycombinator.com/item?id={story_id}"),
+                            engagement_score=story.get('score', 0)
+                        )
+                except Exception as e:
+                    logger.error(f"Error processing story {story_id}: {str(e)}")
+                    continue 

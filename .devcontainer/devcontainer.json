@@ -1,8 +1,10 @@
 {
-    "name": "Python Dev Container",
-    "dockerComposeFile": "docker-compose.yml",
-    "service": "app",
-    "workspaceFolder": "/workspace",
+    "name": "Python 3",
+    "image": "mcr.microsoft.com/devcontainers/python:3.10",
+    "features": {
+        "ghcr.io/devcontainers-contrib/features/poetry:2": {}
+    },
+    "postCreateCommand": "poetry install",
     "customizations": {
         "vscode": {
             "extensions": [

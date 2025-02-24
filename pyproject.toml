@@ -1,12 +1,32 @@
 [tool.poetry]
 name = "sieve"
 version = "0.1.0"
-description = "Tech news monitoring system"
-authors = ["Your Name <your.email@example.com>"]
+description = "AI agent for monitoring discussions across platforms"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-httpx = "^0.26.0"
+pydantic = "^2.5.0"
+tweepy = "^4.14.0"
+langchain = "^0.1.0"
+fastapi = "^0.104.0"
+sqlalchemy = "^2.0.0"
+asyncpg = "^0.29.0"
+chromadb = "^0.4.0"
+structlog = "^24.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+ruff = "^0.1.0"
+mypy = "^1.6.0"
+
+[tool.ruff]
+select = ["E", "F", "I", "N", "B", "A"]
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
 
 [build-system]
 requires = ["poetry-core"]

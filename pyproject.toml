@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "sieve"
+version = "0.1.0"
+description = "Tech news monitoring system"
+authors = ["Your Name <your.email@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+httpx = "^0.26.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry-core.backend"
